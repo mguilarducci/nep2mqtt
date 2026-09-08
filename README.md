@@ -69,7 +69,7 @@ All configuration is environment variables.
 | `UPSTREAM_IP` | `162.215.212.139` | NEP cloud IP; empty disables forwarding |
 | `UPSTREAM_HOST` | `www.nepviewer.net` | Host header sent upstream |
 | `UPSTREAM_TIMEOUT_S` | `8` | Upstream request timeout |
-| `ENERGY_WH_PER_COUNT` | `9.25` | Energy scale, see below |
+| `ENERGY_WH_PER_COUNT` | `3.6` | Energy scale, see below |
 | `GRID_VOLTAGE_DIVISOR` | `17.32` | Grid voltage scale, see below |
 | `UNPOPULATED_VOLTAGE_V` | `5` | Below this a channel counts as having no panel |
 | `LOG_LEVEL` | `INFO` | Python log level |
@@ -98,9 +98,12 @@ panels gets two channels rather than two entities stuck at zero.
 
 Two scales are still provisional, which is why both are adjustable:
 
-- **Energy.** The frame reports counts, not watt-hours. Integrating power across
-  three units puts one count at about 9.25 Wh; 10 Wh is still plausible. Compare
-  a full day against the vendor app and set `ENERGY_WH_PER_COUNT` accordingly.
+- **Energy.** The frame reports counts, not watt-hours. One count is about
+  3.6 Wh, calibrated against a full day on three units: the ratios between them
+  matched the vendor app's daily totals to within 0.15%, so the counter is
+  linear and only the scale was open. If your own daily totals differ from the
+  app by a constant factor, multiply `ENERGY_WH_PER_COUNT` by (their number
+  divided by yours).
 - **Grid voltage.** Reported as phase-to-phase (~220 V), which is what the
   inverter measures at its own terminals. Dividing the raw value by 30 instead
   of 17.32 yields phase-to-neutral (~127 V) on a 127/220 system - the same

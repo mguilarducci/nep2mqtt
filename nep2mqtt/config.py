@@ -21,10 +21,16 @@ DEFAULT_UPSTREAM_IP = "162.215.212.139"
 DEFAULT_UPSTREAM_HOST = "www.nepviewer.net"
 DEFAULT_UPSTREAM_TIMEOUT_S = 8.0
 
-# Provisional. Measured at ~9.25 Wh per count by integrating power across three
-# units over a short window; 10 Wh is still plausible. Compare a full day
-# against the vendor app and correct it here.
-DEFAULT_ENERGY_WH_PER_COUNT = 9.25
+# Calibrated against a full day on three units, comparing each inverter's own
+# daily total in the vendor app with the counts reported here. The proportions
+# between the three matched the app's to within 0.15%, so the field is a linear
+# energy counter and only the scale was ever in question.
+#
+# An earlier estimate of 9.25 came from integrating power over a ten-minute
+# window, and was wrong by a factor of 2.6 -- three samples five minutes apart,
+# across passing cloud, is not enough curve to integrate. A day of accumulated
+# counts against a known total is.
+DEFAULT_ENERGY_WH_PER_COUNT = 3.6
 
 # 17.32 is 10*sqrt(3), and yields the phase-to-phase voltage (~220 V) that a
 # microinverter measures at its own terminals. Dividing the same reading by 30

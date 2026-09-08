@@ -29,7 +29,7 @@ class TestDefaults(unittest.TestCase):
         self.assertEqual(settings.mqtt_port, 1883)
         self.assertEqual(settings.mqtt_client_id, "nep2mqtt")
         self.assertEqual(settings.grid_voltage_divisor, 17.32)
-        self.assertEqual(settings.energy_wh_per_count, 9.25)
+        self.assertEqual(settings.energy_wh_per_count, 3.6)
 
     def test_missing_host_is_rejected(self):
         with mock.patch.dict(os.environ, {}, clear=True):

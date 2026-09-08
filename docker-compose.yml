@@ -63,9 +63,10 @@ services:
       UPSTREAM_HOST: ${UPSTREAM_HOST:-www.nepviewer.net}
       UPSTREAM_TIMEOUT_S: ${UPSTREAM_TIMEOUT_S:-8}
 
-      # Provisional: measured at ~9.25 Wh per count over a short window. Compare
-      # a full day against the vendor app and correct it here, no rebuild.
-      ENERGY_WH_PER_COUNT: ${ENERGY_WH_PER_COUNT:-9.25}
+      # Calibrated against a full day on three units. If your daily totals
+      # disagree with the vendor app by a constant factor, multiply this value
+      # by (their number / yours) and restart - no rebuild.
+      ENERGY_WH_PER_COUNT: ${ENERGY_WH_PER_COUNT:-3.6}
 
       # 17.32 reports phase-to-phase (~220 V), which is what the inverter
       # measures at its terminals. Use 30 for phase-to-neutral (~127 V) on a
