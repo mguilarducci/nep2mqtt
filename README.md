@@ -65,7 +65,7 @@ All configuration is environment variables.
 | `UPSTREAM_HOST` | `www.nepviewer.net` | Host header sent upstream |
 | `UPSTREAM_TIMEOUT_S` | `8` | Upstream request timeout |
 | `ENERGY_WH_PER_COUNT` | `9.25` | Energy scale, see below |
-| `GRID_VOLTAGE_DIVISOR` | `30` | Grid voltage scale, see below |
+| `GRID_VOLTAGE_DIVISOR` | `17.32` | Grid voltage scale, see below |
 | `UNPOPULATED_VOLTAGE_V` | `5` | Below this a channel counts as having no panel |
 | `LOG_LEVEL` | `INFO` | Python log level |
 | `OTEL_SDK_DISABLED` | `true` | Set to `false` to enable OpenTelemetry |
@@ -96,9 +96,11 @@ Two scales are still provisional, which is why both are adjustable:
 - **Energy.** The frame reports counts, not watt-hours. Integrating power across
   three units puts one count at about 9.25 Wh; 10 Wh is still plausible. Compare
   a full day against the vendor app and set `ENERGY_WH_PER_COUNT` accordingly.
-- **Grid voltage.** Reported as phase-to-neutral (~127 V on a 127/220 system).
-  Dividing the raw value by 17.32 instead of 30 yields phase-to-phase (~220 V).
-  Both describe the same measurement; the convention is unconfirmed.
+- **Grid voltage.** Reported as phase-to-phase (~220 V), which is what the
+  inverter measures at its own terminals. Dividing the raw value by 30 instead
+  of 17.32 yields phase-to-neutral (~127 V) on a 127/220 system - the same
+  measurement stated the other way round. If your readings come out low by a
+  factor of sqrt(3), set `GRID_VOLTAGE_DIVISOR=30`.
 
 Neither affects power, frequency, temperature or the per-channel readings.
 

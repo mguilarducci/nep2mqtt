@@ -55,10 +55,11 @@ services:
       # a full day against the vendor app and correct it here, no rebuild.
       ENERGY_WH_PER_COUNT: ${ENERGY_WH_PER_COUNT:-9.25}
 
-      # Also provisional. 30 reports phase-to-neutral (~127 V) on a 127/220
-      # system; 17.32 reports phase-to-phase (~220 V). Same measurement, and a
-      # multimeter settles which convention the firmware means.
-      GRID_VOLTAGE_DIVISOR: ${GRID_VOLTAGE_DIVISOR:-30}
+      # 17.32 reports phase-to-phase (~220 V), which is what the inverter
+      # measures at its terminals. Use 30 for phase-to-neutral (~127 V) on a
+      # 127/220 system - the same measurement, stated the other way round. A
+      # reading low by a factor of sqrt(3) means you want the other one.
+      GRID_VOLTAGE_DIVISOR: ${GRID_VOLTAGE_DIVISOR:-17.32}
 
       # Below this a channel counts as having no panel and gets no entities. An
       # empty input reads ~0.93 V on a BDM-2250; another model may differ.

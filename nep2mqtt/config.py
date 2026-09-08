@@ -26,11 +26,12 @@ DEFAULT_UPSTREAM_TIMEOUT_S = 8.0
 # against the vendor app and correct it here.
 DEFAULT_ENERGY_WH_PER_COUNT = 9.25
 
-# Also provisional, and the same reasoning: 30 yields phase-to-neutral (~127 V)
-# on a 127/220 system, while 17.32 (10*sqrt(3)) yields phase-to-phase (~220 V).
-# Both describe the same measurement; a multimeter settles which convention the
-# firmware means.
-DEFAULT_GRID_VOLTAGE_DIVISOR = 30.0
+# 17.32 is 10*sqrt(3), and yields the phase-to-phase voltage (~220 V) that a
+# microinverter measures at its own terminals. Dividing the same reading by 30
+# instead yields phase-to-neutral (~127 V) on a 127/220 system - the same
+# measurement, stated the other way round. If your readings come out low by a
+# factor of sqrt(3), that is the one you want.
+DEFAULT_GRID_VOLTAGE_DIVISOR = 17.32
 
 # An input with no panel reads a steady ~0.93 V on a BDM-2250, while a populated
 # one stays above 30 V even in weak light. Exposed because another model may sit

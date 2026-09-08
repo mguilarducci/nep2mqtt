@@ -31,9 +31,10 @@ moves up and then down, and it tracks power loosely rather than time.
 Two scales are still provisional, which is why they stay configurable:
 
 ``GRID_VOLTAGE_DIVISOR``
-    30.0 yields the phase-to-neutral voltage (~127 V) on a 127/220 system. The
-    same reading divided by 17.32 (10*sqrt(3)) yields phase-to-phase (~220 V).
-    The convention still needs confirming with a multimeter.
+    17.32 is 10*sqrt(3), and yields the phase-to-phase voltage (~220 V) the
+    inverter measures at its terminals. The same reading over 30 yields
+    phase-to-neutral (~127 V) on a 127/220 system - one measurement, two
+    conventions. A reading low by a factor of sqrt(3) means the other one.
 
 Energy
     This module returns **raw counts**, never Wh. The conversion is about
@@ -51,7 +52,7 @@ CHANNEL_COUNT = 4
 CHANNEL_BLOCK_OFFSET = 41
 CHANNEL_BLOCK_SIZE = 6
 CHECKSUM_RANGE = slice(1, 67)
-GRID_VOLTAGE_DIVISOR = 30.0
+GRID_VOLTAGE_DIVISOR = 17.32
 UNPOPULATED_VOLTAGE_V = 5.0
 """Below this the input has no panel attached: an empty input reads a steady
 ~0.93 V, while a populated one stays above 30 V even in weak sunlight."""

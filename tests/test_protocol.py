@@ -63,8 +63,8 @@ class TestKnownValues(unittest.TestCase):
     def test_temperature(self):
         self.assertAlmostEqual(self.reading["temperature_c"], 42.56, places=2)
 
-    def test_grid_voltage_phase_to_neutral(self):
-        self.assertAlmostEqual(self.reading["grid_voltage_v"], 126.93, places=2)
+    def test_grid_voltage_phase_to_phase(self):
+        self.assertAlmostEqual(self.reading["grid_voltage_v"], 219.86, places=2)
 
     def test_four_channels(self):
         self.assertEqual(len(self.reading["channels"]), 4)
@@ -128,11 +128,12 @@ class TestConfigurableScales(unittest.TestCase):
     def setUp(self):
         self.frame = load("unit-a-4ch.bin")
 
-    def test_phase_to_phase_convention(self):
-        # Same raw reading, the other convention: 30 -> ~127 V phase-to-neutral,
-        # 17.32 (10*sqrt(3)) -> ~220 V phase-to-phase.
-        reading = decode(self.frame, grid_voltage_divisor=17.32)
-        self.assertAlmostEqual(reading["grid_voltage_v"], 219.86, places=1)
+    def test_phase_to_neutral_convention(self):
+        # Same raw reading, the other convention: 17.32 (10*sqrt(3)) is the
+        # default and gives ~220 V phase-to-phase, 30 gives ~127 V
+        # phase-to-neutral on a 127/220 system.
+        reading = decode(self.frame, grid_voltage_divisor=30.0)
+        self.assertAlmostEqual(reading["grid_voltage_v"], 126.93, places=1)
 
     def test_threshold_decides_what_counts_as_empty(self):
         # A 4-panel unit: nothing is empty at the default threshold.

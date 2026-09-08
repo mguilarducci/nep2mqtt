@@ -28,7 +28,7 @@ class TestDefaults(unittest.TestCase):
         self.assertEqual(settings.mqtt_host, "broker.local")
         self.assertEqual(settings.mqtt_port, 1883)
         self.assertEqual(settings.mqtt_client_id, "nep2mqtt")
-        self.assertEqual(settings.grid_voltage_divisor, 30.0)
+        self.assertEqual(settings.grid_voltage_divisor, 17.32)
         self.assertEqual(settings.energy_wh_per_count, 9.25)
 
     def test_missing_host_is_rejected(self):
@@ -49,7 +49,7 @@ class TestOverrides(unittest.TestCase):
             UPSTREAM_HOST="example.invalid",
             UPSTREAM_TIMEOUT_S="2.5",
             ENERGY_WH_PER_COUNT="10",
-            GRID_VOLTAGE_DIVISOR="17.32",
+            GRID_VOLTAGE_DIVISOR="30",
             UNPOPULATED_VOLTAGE_V="3",
             LOG_LEVEL="debug",
         ):
@@ -59,7 +59,7 @@ class TestOverrides(unittest.TestCase):
         self.assertEqual(settings.upstream_host, "example.invalid")
         self.assertEqual(settings.upstream_timeout_s, 2.5)
         self.assertEqual(settings.energy_wh_per_count, 10.0)
-        self.assertEqual(settings.grid_voltage_divisor, 17.32)
+        self.assertEqual(settings.grid_voltage_divisor, 30.0)
         self.assertEqual(settings.unpopulated_voltage_v, 3.0)
         self.assertEqual(settings.log_level, "DEBUG")
 
