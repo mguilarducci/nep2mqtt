@@ -40,6 +40,26 @@ def _time_response() -> bytes:
     return datetime.now().strftime(TIME_FORMAT).encode("ascii")
 
 
+def _source_address(request: Request) -> str:
+    """The inverter's address, seen through however many proxies.
+
+    Behind a reverse proxy the TCP peer is the proxy, so ``request.client``
+    reports the same gateway address for every inverter. Traefik and friends
+    pass the original along in ``X-Forwarded-For``, whose first entry is the
+    client that started the chain.
+
+    This is informational -- it labels a device in Home Assistant and helps find
+    one on the network. The header is trivially forged, so nothing here should
+    ever become a security decision.
+    """
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        first = forwarded.split(",")[0].strip()
+        if first:
+            return first
+    return request.client.host if request.client else "unknown"
+
+
 def _hexdump(data: bytes, width: int = 16) -> str:
     lines = []
     for offset in range(0, len(data), width):
@@ -118,7 +138,7 @@ async def _forward(
 @router.api_route("/{_path:path}", methods=["GET", "POST"])
 async def receive(request: Request, _path: str) -> Response:
     body = await request.body()
-    source = request.client.host if request.client else "unknown"
+    source = _source_address(request)
     settings: Settings = request.app.state.settings
 
     if body:

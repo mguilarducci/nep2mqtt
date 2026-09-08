@@ -85,6 +85,22 @@ class TestRealFrame(unittest.TestCase):
         self.assertEqual(len(self.publisher.sources), 1)
         self.assertTrue(self.publisher.sources[0])
 
+    def test_forwarded_header_wins_over_the_tcp_peer(self):
+        # Behind a proxy the peer is the proxy; the inverter is in the header.
+        with self.client as client:
+            client.post(
+                "/t.php",
+                content=REAL_FRAME,
+                headers={"X-Forwarded-For": "10.0.210.156, 172.21.0.1"},
+            )
+        self.assertEqual(self.publisher.sources[0], "10.0.210.156")
+
+    def test_falls_back_to_the_peer_without_the_header(self):
+        with self.client as client:
+            client.post("/t.php", content=REAL_FRAME)
+        self.assertTrue(self.publisher.sources[0])
+        self.assertNotIn(",", self.publisher.sources[0])
+
     def test_any_path_is_accepted(self):
         # Other NEP models are reported to post elsewhere; the payload
         # identifies a frame, not the URL.
