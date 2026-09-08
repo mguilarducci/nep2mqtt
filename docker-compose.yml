@@ -1,0 +1,105 @@
+# Single-file stack, deployable as-is by Portainer.
+#
+# The MQTT broker is deliberately absent: this points at the broker you already
+# run, through MQTT_HOST.
+#
+# Two things outside this file have to be true or nothing arrives:
+#
+#   1. DNS for www.nepviewer.net must resolve to this host. The inverters have
+#      no local API and cannot be told where to report; redirecting the vendor
+#      hostname is what delivers the telemetry here.
+#   2. If the inverters sit on an isolated IoT VLAN, that VLAN must be allowed
+#      to reach this host on TCP/80. Without the rule the connection dies at the
+#      gateway with no error anywhere, which looks exactly like the inverters
+#      having gone quiet.
+
+services:
+  nep2mqtt:
+    # Pulled, never built here. Portainer runs `compose pull` before starting a
+    # stack, so an unqualified local name would resolve to Docker Hub and fail.
+    # CI publishes this image on every push to main.
+    #
+    # Prefer a sha- tag over latest anywhere the running version matters:
+    # latest moves with every merge and cannot identify a build.
+    image: ghcr.io/mguilarducci/nep2mqtt:${IMAGE_TAG:-latest}
+    container_name: nep2mqtt
+    restart: unless-stopped
+
+    ports:
+      # Host 80 because the inverters will not talk to anything else; container
+      # 3333 because the process is not root and cannot bind a privileged port.
+      # Keep this in step with UVICORN_PORT and EXPOSE in the Dockerfile.
+      - "80:3333"
+
+    environment:
+      MQTT_HOST: ${MQTT_HOST:?point at your MQTT broker}
+      MQTT_PORT: ${MQTT_PORT:-1883}
+      MQTT_USERNAME: ${MQTT_USERNAME:-}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:-}
+      MQTT_CLIENT_ID: ${MQTT_CLIENT_ID:-nep2mqtt}
+      MQTT_PREFIX: ${MQTT_PREFIX:-nep2mqtt}
+      HA_DISCOVERY_PREFIX: ${HA_DISCOVERY_PREFIX:-homeassistant}
+
+      # Forwarding to the NEP cloud, which keeps the NEPViewer app working while
+      # DNS is redirected here. Set it to an empty string to run fully offline:
+      # the inverter only expects the current time back, and this service
+      # answers that on its own.
+      #
+      # An IP and not a hostname on purpose — DNS for the vendor domain now
+      # points at this container, so resolving the name would loop back here.
+      UPSTREAM_IP: ${UPSTREAM_IP-162.215.212.139}
+      UPSTREAM_HOST: ${UPSTREAM_HOST:-www.nepviewer.net}
+      UPSTREAM_TIMEOUT_S: ${UPSTREAM_TIMEOUT_S:-8}
+
+      # Provisional: measured at ~9.25 Wh per count over a short window. Compare
+      # a full day against the vendor app and correct it here, no rebuild.
+      ENERGY_WH_PER_COUNT: ${ENERGY_WH_PER_COUNT:-9.25}
+
+      # Also provisional. 30 reports phase-to-neutral (~127 V) on a 127/220
+      # system; 17.32 reports phase-to-phase (~220 V). Same measurement, and a
+      # multimeter settles which convention the firmware means.
+      GRID_VOLTAGE_DIVISOR: ${GRID_VOLTAGE_DIVISOR:-30}
+
+      # Below this a channel counts as having no panel and gets no entities. An
+      # empty input reads ~0.93 V on a BDM-2250; another model may differ.
+      UNPOPULATED_VOLTAGE_V: ${UNPOPULATED_VOLTAGE_V:-5}
+
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+      # --- OpenTelemetry -------------------------------------------------
+      # Off unless asked for. A private service can assume a collector is
+      # listening; a published image cannot, and one enabled against nothing
+      # spends its life retrying exports. Set this to false to turn it on.
+      OTEL_SDK_DISABLED: ${OTEL_SDK_DISABLED:-true}
+
+      # A real default, never `${VAR:-}`: that yields an EMPTY STRING rather
+      # than an absent variable, and an empty endpoint has aborted an SDK boot
+      # before.
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://host.docker.internal:4318}
+      OTEL_RESOURCE_ATTRIBUTES: deployment.environment=production
+
+      # NOT optional once enabled, and the failure is loud but misleading: the
+      # Python SDK defaults to gRPC and goes looking for otlp_proto_grpc, which
+      # is not installed and never will be. The exporter shipped in the image is
+      # the HTTP one, and this points the SDK at it.
+      OTEL_EXPORTER_OTLP_PROTOCOL: http/protobuf
+
+      # Bound how long shutdown waits on a collector that is not answering. The
+      # case that hurts is an address that drops packets rather than refusing
+      # them: the hot path is untouched, but the process then takes tens of
+      # seconds to exit, flushing buffers at something that never replies.
+      OTEL_EXPORTER_OTLP_TIMEOUT: 2
+      OTEL_BSP_EXPORT_TIMEOUT: 2000
+      OTEL_BSP_SCHEDULE_DELAY: 1000
+      OTEL_METRIC_EXPORT_TIMEOUT: 2000
+
+    # Docker's default is 10s, which is exactly where the flush above lands.
+    stop_grace_period: 15s
+
+    extra_hosts:
+      # A collector usually lives in a stack of its own, so its network is not
+      # reachable by service name. The route between stacks is out to the host
+      # and back in through the published port, and plain Docker on Linux does
+      # not provide this name by itself - without the mapping the endpoint
+      # resolves to nothing and every export fails silently.
+      - "host.docker.internal:host-gateway"

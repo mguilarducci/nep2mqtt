@@ -1,0 +1,118 @@
+# Reverse-engineering scratch: the interceptor and standalone decoder that
+# produced the protocol map, plus the raw payloads they captured. Superseded by
+# nep2mqtt/ and kept out of the repo on purpose - two copies of a binary parser
+# is one copy too many. The packets worth keeping live in tests/fixtures/.
+capture/
+
+# Raw captured frames, from anywhere. A frame carries the inverter's serial
+# number, which is how the vendor cloud identifies the device - closer to a weak
+# credential than to telemetry. tests/fixtures/ holds anonymised frames with
+# synthetic serials and recomputed checksums; see the note in README. Nothing
+# straight off the wire belongs in git.
+raw/
+*.pcap
+*.pcapng
+
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Build / distribution
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ---- Virtual environments ----
+.venv/
+venv/
+env/
+ENV/
+
+# ---- uv ----
+# uv.lock is committed on purpose (this is an application, not a library)
+.uv-cache/
+
+# ---- Type checking / build artifacts ----
+*.orig
+*.rej
+
+# ---- Tests / coverage / lint ----
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.tox/
+.nox/
+
+# ---- Environment / secrets ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+credentials.json
+secrets.*
+
+# ---- FastAPI / runtime ----
+*.log
+*.db
+*.sqlite3
+instance/
+
+# ---- Docker ----
+# The single compose file is committed; an override is local by definition.
+docker-compose.override.yml
+
+# ---- Agent tooling ----
+.remember/
+# CodeGraph index: a local database plus daemon scratch, per machine. It carries
+# its own self-ignoring .gitignore, but naming it here keeps the whole directory
+# out regardless of how the tool evolves.
+.codegraph/
+# Symlinks into .venv, recreated by 'uvx library-skills' after 'uv sync'.
+# .claude/skills/fastapi is a symlink to .agents/skills/fastapi, so both
+# must be ignored together or a fresh clone gets a dangling link.
+.agents/skills/fastapi
+.claude/skills/fastapi
+
+# ---- Editors / IDEs ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.\#*
+\#*\#
+
+# ---- macOS ----
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# ---- Linux ----
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ---- Windows ----
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk

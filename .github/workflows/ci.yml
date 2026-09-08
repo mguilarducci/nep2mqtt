@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install
+        run: uv sync --frozen
+
+      # The decoder tests run against packets captured from real hardware, so a
+      # green run here means the parser still agrees with three actual units.
+      - name: Run tests
+        run: uv run python -m unittest discover -s tests -t . -v

@@ -1,0 +1,24 @@
+[project]
+name = "nep2mqtt"
+version = "0.1.0"
+description = "Local telemetry for NEP BDM-2250 microinverters, published to MQTT with Home Assistant discovery"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.141.1",
+    "httpx>=0.28.1",
+    "opentelemetry-distro>=0.65b0",
+    "opentelemetry-exporter-otlp-proto-http>=1.44.0",
+    "opentelemetry-instrumentation-fastapi>=0.65b0",
+    "opentelemetry-instrumentation-httpx>=0.65b0",
+    "paho-mqtt>=2.1.0",
+    "uvicorn[standard]>=0.52.4",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
