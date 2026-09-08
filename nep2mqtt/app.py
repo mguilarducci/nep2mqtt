@@ -124,8 +124,12 @@ async def receive(request: Request, _path: str) -> Response:
     if body:
         _handle_frame(body, source, request.app.state.publisher, settings)
 
+    # Only a request carrying a payload is worth relaying. An empty GET is not
+    # inverter traffic - it is the container healthcheck - and forwarding it
+    # would hit the vendor once a minute forever, while making our own health
+    # depend on theirs.
     payload = None
-    if settings.upstream_ip:
+    if body and settings.upstream_ip:
         payload = await _forward(request, body, request.app.state.http, settings)
     # `not payload` rather than `is None`: an upstream that answers 200 with an
     # empty body is as useless to the inverter as one that does not answer at
@@ -206,4 +210,9 @@ def build() -> FastAPI:
         level=settings.log_level,
         format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
     )
+    # httpx logs one INFO line per forwarded request. The application already
+    # logs each reading with the serial and the power, so httpx would only
+    # repeat it saying less - the same reason uvicorn's access log is off.
+    # Warnings still come through, and a failed forward is logged by us anyway.
+    logging.getLogger("httpx").setLevel(logging.WARNING)
     return create_app(settings)

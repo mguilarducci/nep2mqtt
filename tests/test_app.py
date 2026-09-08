@@ -107,6 +107,26 @@ class TestUpstreamResponses(unittest.TestCase):
             response = client.post("/t.php", content=REAL_FRAME)
         self.assertEqual(response.content, b"20260908152902")
 
+    def test_bodiless_request_is_not_forwarded(self):
+        # The healthcheck GETs this service every minute; relaying that would
+        # hammer the vendor for nothing.
+        forwarded = []
+
+        settings = Settings(mqtt_host="unused", upstream_ip="192.0.2.1")
+        app = create_app(settings, publisher=FakePublisher())
+
+        async def spy(request, body, client, settings):
+            forwarded.append(body)
+            return b"upstream"
+
+        import nep2mqtt.app as module
+        module._forward = spy
+
+        with TestClient(app) as client:
+            response = client.get("/")
+        self.assertEqual(forwarded, [])
+        self.assertEqual(len(response.content), 14)
+
     def test_empty_upstream_body_falls_back_to_our_clock(self):
         # A 200 with nothing in it leaves the inverter with no time at all,
         # which is the same outcome as no answer - so answer it ourselves.
