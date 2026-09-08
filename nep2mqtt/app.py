@@ -127,7 +127,10 @@ async def receive(request: Request, _path: str) -> Response:
     payload = None
     if settings.upstream_ip:
         payload = await _forward(request, body, request.app.state.http, settings)
-    if payload is None:
+    # `not payload` rather than `is None`: an upstream that answers 200 with an
+    # empty body is as useless to the inverter as one that does not answer at
+    # all. Either way it needs the time back, so fall through to ours.
+    if not payload:
         payload = _time_response()
 
     return Response(content=payload, media_type=RESPONSE_MEDIA_TYPE)

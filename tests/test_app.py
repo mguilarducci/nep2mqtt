@@ -41,6 +41,19 @@ class FakePublisher:
         self.sources.append(source_ip)
 
 
+def build_with_upstream(publisher, upstream_body):
+    """App whose upstream answers 200 with whatever body is given."""
+    settings = Settings(mqtt_host="unused", upstream_ip="192.0.2.1")
+    app = create_app(settings, publisher=publisher)
+
+    async def fake_forward(request, body, client, settings):
+        return upstream_body
+
+    import nep2mqtt.app as module
+    module._forward = fake_forward
+    return TestClient(app)
+
+
 def build(publisher):
     # upstream_ip=None keeps the vendor cloud out of the tests entirely.
     settings = Settings(mqtt_host="unused", upstream_ip=None)
@@ -79,6 +92,28 @@ class TestRealFrame(unittest.TestCase):
             response = client.post("/i.php", content=REAL_FRAME)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(self.publisher.readings), 1)
+
+
+class TestUpstreamResponses(unittest.TestCase):
+    """Whatever upstream does, the inverter still needs its time sync back."""
+
+    def tearDown(self):
+        import importlib
+        import nep2mqtt.app
+        importlib.reload(nep2mqtt.app)
+
+    def test_upstream_body_is_passed_through(self):
+        with build_with_upstream(FakePublisher(), b"20260908152902") as client:
+            response = client.post("/t.php", content=REAL_FRAME)
+        self.assertEqual(response.content, b"20260908152902")
+
+    def test_empty_upstream_body_falls_back_to_our_clock(self):
+        # A 200 with nothing in it leaves the inverter with no time at all,
+        # which is the same outcome as no answer - so answer it ourselves.
+        with build_with_upstream(FakePublisher(), b"") as client:
+            response = client.post("/t.php", content=REAL_FRAME)
+        self.assertEqual(len(response.content), 14)
+        self.assertTrue(response.content.decode().isdigit())
 
 
 class TestDegradedCases(unittest.TestCase):
