@@ -35,9 +35,13 @@ units register themselves. Adding another microinverter means plugging it in.
 You need two things: this container reachable on port 80, and DNS for
 `www.nepviewer.net` pointing at it.
 
-1. Run the container (see `docker-compose.yml`). It publishes host port 80 onto
-   the container's 3333 - the inverters will not talk to anything but 80, and
-   the process runs unprivileged so it cannot bind 80 itself.
+1. Run the container (see `docker-compose.yml`). **Something has to answer on
+   port 80** - the inverters will not talk to any other port and it is not
+   configurable on their side. Either publish this container there directly
+   (`HOST_PORT=80`), or put it behind a reverse proxy that already holds 80 and
+   forwards by Host header, which is what the default `HOST_PORT=3333` assumes.
+   The container itself always listens on 3333, because the process runs
+   unprivileged and cannot bind a privileged port.
 2. Override DNS for `www.nepviewer.net` to the container host. Most routers can
    do this; a destination NAT rule works too.
 3. If your inverters sit on an isolated IoT VLAN, allow that VLAN to reach the
@@ -60,6 +64,7 @@ All configuration is environment variables.
 | `MQTT_CLIENT_ID` | `nep2mqtt` | Broker client id |
 | `MQTT_PREFIX` | `nep2mqtt` | Topic prefix |
 | `HA_DISCOVERY_PREFIX` | `homeassistant` | Discovery prefix |
+| `HOST_PORT` | `3333` | Host port to publish on; set to `80` when running without a proxy |
 | `UVICORN_PORT` | `3333` in the image | Port to receive on; uvicorn's own override |
 | `UPSTREAM_IP` | `162.215.212.139` | NEP cloud IP; empty disables forwarding |
 | `UPSTREAM_HOST` | `www.nepviewer.net` | Host header sent upstream |

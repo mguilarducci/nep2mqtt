@@ -26,10 +26,22 @@ services:
     restart: unless-stopped
 
     ports:
-      # Host 80 because the inverters will not talk to anything else; container
-      # 3333 because the process is not root and cannot bind a privileged port.
-      # Keep this in step with UVICORN_PORT and EXPOSE in the Dockerfile.
-      - "80:3333"
+      # The inverters only ever talk to port 80, so SOMETHING has to answer
+      # there - but not necessarily this container.
+      #
+      # The default publishes on 3333, which is the arrangement behind a reverse
+      # proxy: the proxy holds 80 and forwards here by Host header. Publishing
+      # on 80 directly would collide with it, and the collision is at least
+      # loud: "Bind for 0.0.0.0:80 failed: port is already allocated".
+      #
+      # Running without a proxy? Set HOST_PORT=80. Nothing else on the host may
+      # hold that port, and if nothing does answer there the failure is quiet:
+      # the service starts, logs nothing, and no reading ever arrives.
+      #
+      # The container side is 3333 because the process is not root and cannot
+      # bind a privileged port. Keep it in step with UVICORN_PORT in the
+      # Dockerfile.
+      - "${HOST_PORT:-3333}:3333"
 
     environment:
       MQTT_HOST: ${MQTT_HOST:?point at your MQTT broker}
